@@ -1,2 +1,2 @@
 # PFM
-Repository with useful code for multiple projects.
+Repository with useful code snippets that can be used across multiple projects. 
