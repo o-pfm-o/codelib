@@ -4,4 +4,3 @@ Created on 2025-05-20.
 Creator: PFM
 '''
 
-import matplotlib.pyplot as plt
