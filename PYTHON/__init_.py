@@ -10,3 +10,6 @@ Submodules: PFM.PYTHON.submodule_name as ...
 from . import evaluate
 from . import process
 from . import display
+
+if __name__ == "__main__":
+    print("Main module for the PFM python package.")

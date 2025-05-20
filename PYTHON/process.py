@@ -22,3 +22,6 @@ def save_Object(obj, filename, path=''):
         with open(os.path.join(path, filename),'wb') as f: 
             pickle.dump(obj, f)
         print('Done!')
+
+if __name__ == "__main__":
+    print("Module for input and output of data, e.g. reading files")

@@ -5,4 +5,4 @@ Creator: PFM
 '''
 
 if __name__ == "__main__":
-    print("Hello, World!")
+    print("Module for plotting and visualizing data.")
