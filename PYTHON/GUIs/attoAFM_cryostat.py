@@ -34,7 +34,7 @@ from pyqtgraph import PlotWidget
 import numpy as np
 
 # Import our Lake Shore controller
-from lakeshore335 import LakeShore335
+from visa import LakeShore335
 
 
 class ConnectionDialog(QDialog):
