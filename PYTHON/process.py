@@ -20,7 +20,7 @@ def read_TFAnalyzer_3000(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
     
-    # Iterate through all the lines process line by line
+    # Iterate through all the lines process line by line.
     data_dict = dict()
     main_key = '' # main key in the dict which is type of measurement  
     sub_key = '' # sub key of the sub dict
