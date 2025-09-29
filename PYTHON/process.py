@@ -9,114 +9,74 @@ import os
 import pickle
 import numpy as np
 import pandas as pd
+import re
+from typing import Dict, List, Tuple, Any
+import warnings
+
 
 #__________________________________________________________________________________
-def read_TFAnalyzer_3000(filepath):
-    """
-    Reads a TF Analyzer 3000 ferroelectric tester data file and extracts
-    the overview table and individual hysteresis measurements.
-
-    The file contains an overview table followed by multiple hysteresis
-    measurement data blocks. Both overview and measurement data are parsed
-    into pandas DataFrames. Measurement metadata is stored alongside its data.
-
-    Parameters
-    ----------
-    filepath : str
-        Path to the TF Analyzer data file.
-
-    Returns
-    -------
-    overview_df : pd.DataFrame or None
-        DataFrame containing the overview data table.
-        None if the overview table is not found.
-    
-    measurements : dict
-        Dictionary where each key is a measurement identifier (e.g., 'Measurement_1')
-        and each value is a dictionary with metadata keys and a 'data' key containing
-        a pandas DataFrame of the hysteresis measurement data.
-    """
-    overview_df = None
-    measurements = {}
-
-    # Read all lines from the file
-    with open(filepath, "r") as file:
+def read_TFAnalyzer_3000(file_path):
+    # Read in all lines of the file
+    with open(file_path, 'r') as file:
         lines = file.readlines()
-
-    overview_lines = []
-    measurement_blocks = []
-    current_block = []
-    in_overview = False
-    in_measurement = False
-
-    for line in lines:
-        # Detect the start of the overview table section
-        if "Overview" in line or ("Sweep" in line and "Sample" in line):
-            in_overview = True
+    
+    # Iterate through all the lines process line by line
+    data_dict = dict()
+    main_key = '' # main key in the dict which is type of measurement  
+    sub_key = '' # sub key of the sub dict
+    skips = 0
+    for i, line in enumerate(lines): # iterate over all lines
+        if skips: # skip lines from past operations 
+            skips -= 1
             continue
-
-        # Collect lines for the overview table
-        if in_overview:
-            # End of overview section triggered by empty line or comment line
-            if line.strip() == "" or line.startswith("#"):
-                in_overview = False
-                # Convert the collected overview lines to a DataFrame using tab delimiter
-                overview_df = pd.read_csv(pd.compat.StringIO("\n".join(overview_lines)),
-                                          sep="\t")
-                continue
-            overview_lines.append(line.rstrip())
-
-        # Detect the start of a measurement data section
-        if "Measurement" in line or ("Sweep" in line and "Field" in line):
-            # Save any previous measurement block collected
-            in_measurement = True
-            if current_block:
-                measurement_blocks.append(current_block)
-                current_block = []
-            continue
-
-        # Collect lines for the current measurement block
-        if in_measurement:
-            # End of measurement block triggered by empty line or comment
-            if line.strip() == "" or line.startswith("#"):
-                in_measurement = False
-                if current_block:
-                    measurement_blocks.append(current_block)
-                    current_block = []
-                continue
-            current_block.append(line.rstrip())
-
-    # If file ends while still collecting a measurement block, save it too
-    if current_block:
-        measurement_blocks.append(current_block)
-
-    # Parse each measurement block into metadata dictionary with DataFrame
-    for i, block in enumerate(measurement_blocks):
-        meta = {}
-        header = []
-        data = []
-
-        for line in block:
-            # Metadata lines usually start with #, containing key-value pairs
-            if line.startswith("#"):
-                kv = line[1:].split(":", 1)
-                if len(kv) == 2:
-                    meta[kv[0].strip()] = kv[1].strip()
-            # Header line detected by presence of alphabets
-            elif not header and any(c.isalpha() for c in line):
-                header = [h.strip() for h in line.split()]
-            else:
-                # Data line: convert all values to float
-                data.append([float(x) for x in line.split()])
-
-        # Create DataFrame for the measurement data
-        meas_df = pd.DataFrame(data, columns=header)
-        meta["data"] = meas_df
-        measurements[f"Measurement_{i + 1}"] = meta
-
-    return overview_df, measurements
-
-
+        if line in ['DynamicHysteresis\n']: # sub iteration
+            main_key = line.strip()
+            data_dict[main_key] = dict()
+            
+            # header block
+            j = i + 1
+            while lines[j] != '\n':
+                skips =+ 1
+                key, val = lines[j].strip().split(': ', 1)
+                try:
+                    data_dict[main_key][key] = float(val)
+                except:
+                    data_dict[main_key][key] = val
+                finally:
+                    j += 1
+            
+            # table block iterations
+            while lines[j] not in ['DynamicHysteresisResult',]:
+                skips += 1
+                if lines[j] == '\n': # new table
+                    sub_key = lines[j+1].strip()
+                    data_dict[main_key][sub_key] = dict()
+                    j += 2
+                    skips += 1
+                elif 'Time [s]' in lines[j]: # begin of data table
+                    header_line_index = j
+                    while lines[j] != '\n':
+                        j += 1
+                        if j >= len(lines):
+                            break
+                    data_dict[main_key][sub_key]['table'] = pd.read_csv(file_path, 
+                                                                        header=header_line_index, # header start 
+                                                                        delimiter='\t', 
+                                                                        usecols=range(9), # if not specified, an empty col will be added 
+                                                                        nrows=j-header_line_index-1, #skip last empty row
+                                                                        skip_blank_lines=False) # otherwise carriage return is not counted in row index
+                else: # header entries added
+                    key, val = lines[j].strip().split(': ', 1)
+                    try:
+                        data_dict[main_key][sub_key][key] = float(val)
+                    except:
+                        data_dict[main_key][sub_key][key] = val
+                    finally:
+                        j += 1
+                
+                if j >= len(lines):
+                            break
+    return data_dict
 #__________________________________________________________________________________
 def read_txt(filename, path='', deler=',', skro=0, header=False, kwargs = dict()):
     '''
