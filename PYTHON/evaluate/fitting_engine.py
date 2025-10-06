@@ -21,12 +21,12 @@ import warnings
 
 # Import all function modules
 try:
-    from algebraic_functions import ALGEBRAIC_FUNCTIONS
-    from transcendental_functions import TRANSCENDENTAL_FUNCTIONS
-    from special_functions import SPECIAL_FUNCTIONS
-    from advanced_functions import ADVANCED_FUNCTIONS
-    from bessel_functions import BESSEL_FUNCTIONS
-    from zeta_functions import ZETA_FUNCTIONS
+    from math_functions import ALGEBRAIC_FUNCTIONS
+    from math_functions import TRANSCENDENTAL_FUNCTIONS
+    from math_functions import SPECIAL_FUNCTIONS
+    from math_functions import ADVANCED_FUNCTIONS
+    from math_functions import BESSEL_FUNCTIONS
+    from math_functions import ZETA_FUNCTIONS
     print("✓ All function modules loaded successfully")
 except ImportError as e:
     print(f"Warning: Could not import some modules: {e}")
@@ -393,7 +393,7 @@ def calculate_r_squared(y_observed: np.ndarray, residuals: np.ndarray) -> float:
     """Calculate coefficient of determination (R-squared)."""
     ss_res = np.sum(residuals**2)
     ss_tot = np.sum((y_observed - np.mean(y_observed))**2)
-    return 1 - (ss_res / (ss_tot + 1e-10)) if ss_tot > 0 else 0.0
+    return float(1 - (ss_res / (ss_tot + 1e-10)) if ss_tot > 0 else 0.0)
 
 
 def list_available_functions() -> Dict[str, List[str]]:
@@ -433,68 +433,3 @@ def search_functions(query: str) -> List[str]:
             matches.append(func_name)
     
     return matches
-
-
-# =============================================================================
-# DEMONSTRATION AND TESTING
-# =============================================================================
-
-if __name__ == "__main__":
-    """Demonstrate the complete universal fitting system."""
-    
-    print("=" * 80)
-    print("UNIVERSAL MATHEMATICAL FUNCTION FITTING SYSTEM")
-    print("=" * 80)
-    
-    # Show system capabilities
-    categories = get_function_categories()
-    print(f"\\n📊 COMPLETE SYSTEM SUMMARY:")
-    for category, count in categories.items():
-        print(f"  {category}: {count} functions")
-    
-    # Generate demonstration data
-    np.random.seed(42)
-    x = np.linspace(-3, 3, 100)
-    
-    # Test various function types
-    test_functions = [
-        ('sine', lambda x: 2.5 * np.sin(2 * np.pi * 1.2 * x + 0.3) + 0.5),
-        ('quadratic', lambda x: 1.5 * x**2 - 0.8 * x + 0.3),
-        ('exponential', lambda x: 2.0 * np.exp(0.5 * x) - 1.0),
-        ('bessel_j0', lambda x: 1.5 * np.sin(x) / (x + 1e-10)),  # Approximation for demo
-    ]
-    
-    print(f"\\n🎯 TESTING FITTING ENGINE WITH DIFFERENT FUNCTION TYPES:")
-    print("-" * 60)
-    
-    for func_name, true_func in test_functions:
-        if func_name in ALL_FUNCTIONS:
-            # Generate noisy test data
-            y_true = true_func(x)
-            y_noisy = y_true + 0.1 * np.random.randn(len(x))
-            
-            # Fit function
-            try:
-                result = fit_multidimensional_function(x, y_noisy, function=func_name)
-                
-                print(f"\\n{func_name.upper()} FITTING:")
-                print(f"  R² = {result['r_squared']:.4f}")
-                print(f"  Algorithm: {result['algorithm_used']}")
-                print(f"  Parameters: {result['parameters']}")
-                print(f"  Success: {result['success']}")
-                
-            except Exception as e:
-                print(f"\\n{func_name.upper()} FITTING: Failed - {e}")
-    
-    # Demonstrate search functionality
-    print(f"\\n🔍 SEARCH FUNCTIONALITY:")
-    print(f"  Functions containing 'bessel': {search_functions('bessel')[:5]}...")
-    print(f"  Functions containing 'gamma': {search_functions('gamma')[:5]}...")
-    
-    print(f"\\n✅ SYSTEM READY FOR ADVANCED MATHEMATICAL ANALYSIS!")
-    print(f"   Total functions available: {len(ALL_FUNCTIONS)}")
-    print(f"   N-dimensional fitting: Supported")
-    print(f"   Intelligent parameter guessing: Enabled")
-    print(f"   All major mathematical categories: Complete")
-    
-    print("=" * 80)
