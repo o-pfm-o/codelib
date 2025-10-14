@@ -19,15 +19,27 @@ import inspect
 from typing import Dict, Any, Union, List, Callable, Optional, Tuple
 import warnings
 
-# Import all function modules
+# Import all function modules using relative imports for module usage
 try:
-    from math_functions import ALGEBRAIC_FUNCTIONS
-    from math_functions import TRANSCENDENTAL_FUNCTIONS
-    from math_functions import SPECIAL_FUNCTIONS
-    from math_functions import ADVANCED_FUNCTIONS
-    from math_functions import BESSEL_FUNCTIONS
-    from math_functions import ZETA_FUNCTIONS
-    print("✓ All function modules loaded successfully")
+    # Try relative imports first (for when imported as module)
+    try:
+        from .math_functions import ALGEBRAIC_FUNCTIONS
+        from .math_functions import TRANSCENDENTAL_FUNCTIONS
+        from .math_functions import SPECIAL_FUNCTIONS
+        from .math_functions import ADVANCED_FUNCTIONS
+        from .math_functions import BESSEL_FUNCTIONS
+        from .math_functions import ZETA_FUNCTIONS
+        print("✓ All function modules loaded successfully (relative import)")
+    except ImportError:
+        # Fall back to absolute imports (for when run directly)
+        from math_functions import ALGEBRAIC_FUNCTIONS
+        from math_functions import TRANSCENDENTAL_FUNCTIONS
+        from math_functions import SPECIAL_FUNCTIONS
+        from math_functions import ADVANCED_FUNCTIONS
+        from math_functions import BESSEL_FUNCTIONS
+        from math_functions import ZETA_FUNCTIONS
+        print("✓ All function modules loaded successfully (absolute import)")
+        
 except ImportError as e:
     print(f"Warning: Could not import some modules: {e}")
     # Create empty registries as fallback
