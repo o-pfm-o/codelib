@@ -34,7 +34,7 @@ from pyqtgraph import PlotWidget
 import numpy as np
 
 # Import our Lake Shore controller
-from visa import LakeShore335
+from control.lakeshore import LakeShore335
 
 
 class ConnectionDialog(QDialog):
@@ -271,7 +271,7 @@ class DataLogger:
                 row.append(data.get('afm_range', ''))
 
             self.csv_writer.writerow(row)
-            self.log_file.flush()
+            self.log_file.flush()  # type: ignore
         except Exception as e:
             print(f"Logging error: {e}")
 

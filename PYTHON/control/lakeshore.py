@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
+
 """
 Lake Shore Model 335 Temperature Controller Interface
 
 This module provides a Python interface for controlling the Lake Shore Model 335
 Temperature Controller using PyVISA over USB or IEEE-488.
 
-Author: Philipp Fahler-Muenzer
+Author: Assistant
 Date: 2024
 License: MIT
 """
@@ -672,6 +673,21 @@ class LakeShore335:
         return False
 
 
-
+# Example usage and testing
 if __name__ == "__main__":
-    print("Module for the VISA interface using PyVISA.")
+    # Example usage - replace 'ASRL3::INSTR' with your actual resource
+    try:
+        with LakeShore335('ASRL3::INSTR', backend='@py') as controller:
+            # Test basic communication
+            print("Connected to:", controller.get_identification())
+
+            # Read temperatures
+            temp_a, temp_b = controller.read_T()
+            print(f"Temperatures: A={temp_a:.3f}K, B={temp_b:.3f}K")
+
+            # Get PID values for output 1
+            p, i, d = controller.get_PID(1)
+            print(f"Output 1 PID: P={p}, I={i}, D={d}")
+
+    except Exception as e:
+        print(f"Error: {e}")
