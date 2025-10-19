@@ -52,15 +52,15 @@ class LakeShore335:
         self.instrument = rm.open_resource(resource)
 
         # Configure serial communication parameters
-        self.instrument.baud_rate = baud_rate
-        self.instrument.data_bits = data_bits
-        self.instrument.parity = pyvisa.constants.Parity(parity)
-        self.instrument.stop_bits = pyvisa.constants.StopBits.one
-        self.instrument.flow_control = pyvisa.constants.VI_ASRL_FLOW_NONE
+        self.instrument.baud_rate = baud_rate # type: ignore
+        self.instrument.data_bits = data_bits # type: ignore
+        self.instrument.parity = pyvisa.constants.Parity(parity) # type: ignore
+        self.instrument.stop_bits = pyvisa.constants.StopBits.one # type: ignore
+        self.instrument.flow_control = pyvisa.constants.VI_ASRL_FLOW_NONE # type: ignore
 
         # Set termination characters
-        self.instrument.read_termination = read_termination
-        self.instrument.write_termination = write_termination
+        self.instrument.read_termination = read_termination # type: ignore
+        self.instrument.write_termination = write_termination # type: ignore
 
         # Set timeout (30 seconds)
         self.instrument.timeout = 30000
@@ -92,11 +92,11 @@ class LakeShore335:
 
     def _query(self, command: str) -> str:
         """Send query command and return response."""
-        return self.instrument.query(command).strip()
+        return self.instrument.query(command).strip() # type: ignore
 
     def _write(self, command: str):
         """Send command without expecting response."""
-        self.instrument.write(command)
+        self.instrument.write(command) # type: ignore
 
     def _validate_input(self, input_channel: str):
         """Validate input channel is A or B."""
@@ -547,7 +547,7 @@ class LakeShore335:
 
         except Exception as e:
             # If any parameter fails to read, include the error in the results
-            all_params['_errors'] = str(e)
+            all_params['_errors'] = str(e) # type: ignore
 
         return all_params
 
