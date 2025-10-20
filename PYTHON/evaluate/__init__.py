@@ -3,7 +3,7 @@ from . import math_functions
 
 import numpy as np
 
-def moving_average_general(x, N=1, kind='simple', axis=-1, weights=None):
+def moving_average(x, N=1, kind='simple', axis=-1, weights=None):
     """
     Calculate moving averages for 1D or nD data along a specified axis.
 
