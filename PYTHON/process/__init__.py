@@ -12,6 +12,9 @@ import tkinter as tk
 from tkinter import filedialog
 from typing import Union, Tuple, Optional, Any, List, Dict
 import copy
+import pandas as pd
+import numpy as np
+
 
 
 def directory_query(
@@ -159,4 +162,134 @@ class Kwargs:
             dict: A merged dictionary combining all provided keyword arguments.
         """
         return self.merged
+    
+def read_sspfm_forcecurve(path: str, amplification: float = 1) -> pd.DataFrame:
+    """
+    Extract and process force curve data from Asylum Hysteresis CSV files.
+    
+    This function reads force plot data from a CSV file, separates amplitude-on 
+    (AmpOn) from amplitude-off (AmpOff) measurements, and processes the data into 
+    a structured DataFrame. Specifically designed for Asylum Hysteresis curves 
+    with 2 cycles.
+    
+    Parameters
+    ----------
+    path : str
+        File path to the CSV file containing force curve data.
+    amplification : float, optional
+        Multiplication factor to apply to the Bias column (default is 1).
+    
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing statistical descriptions of both AmpOn and AmpOff 
+        measurements for each cycle. Columns are named with the pattern:
+        '{AmpOn/AmpOff}_{ColumnName}_{StatisticName}'
+    
+    Notes
+    -----
+    - The input CSV is expected to have specific columns: Raw, Deflection, 
+      Amplitude, Phase_1, Phase_2, Frequency, ZSnsr, and Bias.
+    - The function detects transitions between AmpOff and AmpOn states by 
+      identifying bias jumps greater than 1.
+    - If the number of AmpOff and AmpOn segments differ, the extra AmpOn 
+      segments are discarded to ensure equal lengths.
+    
+    Examples
+    --------
+    >>> fc_data = self.read_forcecurve('forcecurve_data.csv', amplification=2.0)
+    >>> print(fc_data.shape)
+    (n_cycles, n_features)
+    """
+    
+    # Read the CSV file with appropriate parameters
+    fc_raw = pd.read_csv(
+        path,
+        header=None,
+        skiprows=1,
+        index_col=0,
+        names=('Raw', 'Deflection', 'Amplitude', 'Phase_1', 
+               'Phase_2', 'Frequency', 'ZSnsr', 'Bias')
+    )
+    
+    # Remove any rows with missing values
+    fc_raw = fc_raw.dropna()
+    
+    # Apply amplification factor to the Bias column
+    fc_raw['Bias'] = fc_raw['Bias'] * amplification
+    
+    # Initialize lists to store AmpOn and AmpOff data segments
+    amp_on = []
+    amp_off = []
+    
+    # Initialize tracking variables for segment detection
+    ref_index = 0  # Starting index of current segment
+    ref_bias = 0  # Bias value at the start of current segment
+    bias_on = False  # Flag to track current state (AmpOff or AmpOn)
+    first = True  # Flag to handle the first transition specially
+    
+    # Iterate through the dataframe to detect state transitions
+    for index, row in fc_raw.iterrows():
+        # Update reference bias at the start of each segment
+        if ref_index == index:
+            ref_bias = row['Bias']
+        
+        # Detect state transition: bias jump greater than 1
+        if np.abs(row['Bias'] - ref_bias) > 1:
+            # Handle the first transition (initial calibration segment)
+            if first:
+                first = False
+                segment_stats = fc_raw.loc[ref_index:(index - 1), :].describe()  # type: ignore
+                amp_on.append(segment_stats)
+                amp_off.append(segment_stats)
+            else:
+                # Classify segment based on current state
+                segment_stats = fc_raw.loc[ref_index:(index - 1), :].describe() # type: ignore
+                if bias_on:
+                    amp_on.append(segment_stats)
+                else:
+                    amp_off.append(segment_stats)
+            
+            # Toggle state and update reference values
+            bias_on = not bias_on
+            ref_index = index
+            ref_bias = row['Bias']
+    
+    # Ensure equal lengths by truncating the longer list
+    amp_off_len = len(amp_off)
+    amp_on_len = len(amp_on)
+    if amp_off_len < amp_on_len:
+        amp_on = amp_on[0:amp_off_len]
+    
+    # Generate column headers for the output DataFrame
+    columns = amp_on[0].columns.values
+    rows = amp_on[0].index.values
+    headers = []
+    for bias in ['AmpOn', 'AmpOff']:
+        for column in columns:
+            for row in rows:
+                headers.append('_'.join((bias, column, row)))
+    
+    # Construct the output matrix by combining AmpOn and AmpOff statistics
+    matrix = []
+    for index, on in enumerate(amp_on):
+        off = amp_off[index]
+        line_on = []
+        line_off = []
+        
+        # Extract statistics for each column and row combination
+        for column in columns:
+            for row in rows:
+                line_on.append(on.loc[row, column])
+                line_off.append(off.loc[row, column])
+        
+        # Combine AmpOn and AmpOff data for this cycle
+        line_on.extend(line_off)
+        matrix.append(line_on)
+    
+    # Convert matrix to DataFrame with descriptive headers
+    matrix = pd.DataFrame(data=matrix, columns=headers)
+    
+    return matrix
+
 
