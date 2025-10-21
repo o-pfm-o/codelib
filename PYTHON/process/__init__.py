@@ -5,6 +5,7 @@ Creator: PFM
 '''
 
 from . import tfanalyzer
+from . import dtmanag
 import os
 import pickle
 import tkinter as tk
